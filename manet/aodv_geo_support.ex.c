@@ -180,19 +180,22 @@ Boolean aodv_geo_find_neighbor(	AodvT_Geo_Table* geo_table_ptr,
 // IN:			 start_x, start_y	-- position of node where the RREQ was generated (e.g. previous node, not an originator)
 //				 mid_x, mid_y		-- position of node that receives the RREQ
 //				 end_x, end_y		-- position of the destination node
+//				 lar_scale_factor	-- scale factor for start-end vector length (alpha)
+//				 lar_padding		-- padding for scaled start-end vector length (beta)
 //
 // OUT:		 True,  if length(SE) >= length (ME)
 //			 False, otherwise
 Boolean
 aodv_geo_LAR_distance(double start_x, double start_y,
 					  double mid_x,   double mid_y, 
-					  double end_x,   double end_y)
+					  double end_x,   double end_y,
+					  double lar_scale_factor, double lar_padding)
 {
 		
 	FIN (aodv_rte_rreq_within_distance( <args> ));
 	
-	
-	if (aodv_geo_vector_length(start_x, start_y, end_x, end_y) >=
+	// RH 3/17/13 - Use LAR parameters in comparison (alpha and beta)
+	if (lar_scale_factor * aodv_geo_vector_length(start_x, start_y, end_x, end_y) + lar_padding >=
 		aodv_geo_vector_length(mid_x, mid_y, end_x, end_y))
 	{
 		FRET(OPC_TRUE);
@@ -207,12 +210,14 @@ aodv_geo_LAR_distance(double start_x, double start_y,
 
 // Purpose:	Given positions of the nodes, flooding angle, and aodv type
 //				determine if the current node should rebroadcast RREQ or not
-// IN:			orig_x, orig_y -- position of the node that originated the RREQ
-//				prev_x, prev_y -- position of the node where the RREQ was received from
-//				curr_x, curr_y -- position of the node that received the RREQ
-//				dest_x, dest_y -- position of the destination node
-//				flooding_angle -- acceptable angle to forward the RREQ
-//				aodv_type	   -- type of aodv being used
+// IN:			orig_x, orig_y 		-- position of the node that originated the RREQ
+//				prev_x, prev_y 		-- position of the node where the RREQ was received from
+//				curr_x, curr_y 		-- position of the node that received the RREQ
+//				dest_x, dest_y 		-- position of the destination node
+//				flooding_angle 		-- acceptable angle to forward the RREQ
+//				aodv_type	   		-- type of aodv being used
+//				lar_scale_factor	-- scale factor for start-end vector length for LAR distance
+//				lar_padding			-- padding for scaled start-end vector length for LAR distance
 // Out:		TRUE if the current node should rebroadcase the RREQ
 //				FALSE if the RREQ should be destroyed
 Boolean aodv_geo_rebroadcast(
@@ -223,7 +228,9 @@ Boolean aodv_geo_rebroadcast(
 						double flooding_angle,				// Angle in degrees of the flooding angle
 						double angle_padding,				// The maximum value by which the flooding angle can expand (for Geo_Expand only)
 						int	   aodv_type, 					// Type of AODV being used
-						double dest_velocity)				// The calculated velocity of the destination node (LAR)
+						double dest_velocity,				// The calculated velocity of the destination node (LAR)
+						double lar_scale_factor,			// alpha parameter used in LAR distance
+						double lar_padding)					// beta parameter used in LAR distance
 {
 	double angle;
 	
@@ -251,7 +258,7 @@ Boolean aodv_geo_rebroadcast(
 			// then rebroadcast RREQ (return true), else drop (return false)
 			// NOTE: in LAR distance the nodes compare the distances with the previous node.
 			// LAR TODO
-			FRET(aodv_geo_LAR_distance(prev_x, prev_y, curr_x, curr_y, 	dest_x, dest_y));
+			FRET(aodv_geo_LAR_distance(prev_x, prev_y, curr_x, curr_y, 	dest_x, dest_y, lar_scale_factor, lar_padding));
 				
 	
 		case AODV_TYPE_GEO_STATIC:
@@ -544,6 +551,7 @@ int aodv_geo_compute_expand_flooding_angle(
 			if (request_level == BROADCAST_REQUEST_LEVEL) {
 				// RH 3/27/13 - Update global aodv fallback statistic
 				op_stat_write(global_stat_handle_ptr->num_aodv_fallbacks_global_shandle, 1.0);
+			}
 			break;
 				
 		case AODV_TYPE_REGULAR:

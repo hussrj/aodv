@@ -24,8 +24,8 @@ Boolean aodv_geo_rebroadcast(
 						double flooding_angle,	
 						double angle_padding,
 						int	   aodv_type,
-						double dest_velocity);	//MKA 12/02/10 - Needed for LAR.
-
+						double dest_velocity,	//MKA 12/02/10 - Needed for LAR.
+						double lar_scale_factor, double lar_padding); // RH 3/17/13 - LAR alpha/beta
 
 int aodv_geo_compute_expand_flooding_angle( 
 			InetT_Address_Hash_Table_Handle 	neighbor_connectivity_table, 	
@@ -39,7 +39,7 @@ int aodv_geo_compute_expand_flooding_angle(
 			double								dst_x, 
 			double								dst_y);
 
-Boolean aodv_geo_LAR_distance(double start_x, double start_y,  double mid_x,   double mid_y,  double end_x,   double end_y);
+Boolean aodv_geo_LAR_distance(double start_x, double start_y,  double mid_x,   double mid_y,  double end_x,   double end_y, double lar_scale_factor, double lar_padding);
 
 double  aodv_geo_compute_angle(double start_x, double start_y,  double mid_x,   double mid_y,  double end_x,   double end_y);
 
