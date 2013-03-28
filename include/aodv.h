@@ -135,6 +135,7 @@ typedef struct
 	Stathandle		total_replies_sent_from_dest_global_shandle;
 	Stathandle		total_cached_replies_sent_global_shandle;
 	Stathandle		total_route_errors_sent_global_shandle;
+	Stathandle		num_aodv_fallbacks_global_shandle;
 	} AodvT_Global_Stathandles;
 
 

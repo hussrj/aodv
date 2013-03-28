@@ -501,9 +501,12 @@ int aodv_geo_compute_expand_flooding_angle(
 			double	 							dst_y)	//&dst_y		
 {
 	//PrgT_List* 			neighbor_list;
-
+	//RH 3/27/13 - Need global stat handle for fallback statistic
+	AodvT_Global_Stathandles*	global_stat_handle_ptr;
+	
 	FIN (aodv_geo_rreqsend( <args> ));
 	
+	global_stat_handle_ptr = aodv_support_global_stat_handles_obtain();
 	//MKA_VH 7/18/11 - If we're using a distributed geo table and we don't have destination coordinates,
 	// use regular AODV (broadcast).
 	if (aodv_type == AODV_TYPE_REGULAR ||
@@ -524,6 +527,9 @@ int aodv_geo_compute_expand_flooding_angle(
 			// Initial LAR request failed; revert to regular AODV
 			if (request_level != INITIAL_REQUEST_LEVEL)
 			{
+				// RH 3/27/13 - Update global aodv fallbacks statistic
+				op_stat_write(global_stat_handle_ptr->num_aodv_fallbacks_global_shandle, 1.0);
+				
 				request_level = BROADCAST_REQUEST_LEVEL;
 			}
 			
@@ -535,6 +541,9 @@ int aodv_geo_compute_expand_flooding_angle(
 		case AODV_TYPE_GEO_ROTATE_01:
 		//MKA_VH 7/18/11 - We don't have to do anything; request_level is already incremented outside of
 		// this function upon a route discovery failure, which translates into an increased angle for GeoAODV.
+			if (request_level == BROADCAST_REQUEST_LEVEL) {
+				// RH 3/27/13 - Update global aodv fallback statistic
+				op_stat_write(global_stat_handle_ptr->num_aodv_fallbacks_global_shandle, 1.0);
 			break;
 				
 		case AODV_TYPE_REGULAR:

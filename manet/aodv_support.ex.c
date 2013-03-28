@@ -45,7 +45,8 @@ aodv_support_global_stat_handles_obtain (void)
 		stat_handle_ptr->total_replies_sent_from_dest_global_shandle = op_stat_reg ("AODV.Total Replies Sent from Destination", OPC_STAT_INDEX_NONE, OPC_STAT_GLOBAL);
 		stat_handle_ptr->total_cached_replies_sent_global_shandle = op_stat_reg ("AODV.Total Cached Replies Sent", OPC_STAT_INDEX_NONE, OPC_STAT_GLOBAL);
 		stat_handle_ptr->total_route_errors_sent_global_shandle = op_stat_reg ("AODV.Total Route Errors Sent", OPC_STAT_INDEX_NONE, OPC_STAT_GLOBAL);
-				
+		stat_handle_ptr->num_aodv_fallbacks_global_shandle = op_stat_reg ("AODV.Number of AODV Fallbacks", OPC_STAT_INDEX_NONE, OPC_STAT_GLOBAL);
+		
 		/* Set the flag to indicate that the statistics	*/
 		/* have been registered							*/
 		stat_handles_registered = OPC_TRUE;
