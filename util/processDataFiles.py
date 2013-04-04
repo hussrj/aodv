@@ -5,7 +5,7 @@ import glob
 import matplotlib.pyplot as plt
 
 NUMSEED = 6
-RUNSPERSEED = 16
+RUNSPERSEED = 20
 labels = ['DES-{0}'.format(i + 1) for i in range(RUNSPERSEED + 1)]
 
 for fname in glob.glob("../data/*.txt"):
