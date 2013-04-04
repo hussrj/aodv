@@ -23,5 +23,5 @@ for fname in glob.glob("../data/*.txt"):
 		for label, y in zip(labels, dataAverages):
 			plt.annotate(label, xy = (0, y), xytext = (-20, 20), textcoords = 'offset points', ha = 'right', va = 'bottom',
 				bbox = dict(boxstyle = 'round,pad=0.5', fc = 'yellow', alpha = 0.5), arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3,rad=0'))
-		plt.legend(str(range(1, RUNSPERSEED+1)).strip('[').strip(']').split(','))
+		plt.legend(labels)
 		plt.show()
