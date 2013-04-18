@@ -1,4 +1,4 @@
-# Rob Hussey 4/3/2013
+# Rob Hussey 4/17/2013
 # Process each file in the data directory (txt extension)
 # Split the data by DES, average the data for each DES
 import glob
