@@ -9,7 +9,7 @@
 #include <aodv_geo_table.h>
 
 const double PI = 3.141592653589793238462643383279502884197169399375;
-const double MAX_ANGLE = 360;
+const double MAX_ANGLE = 360.0;
 
 // MKA 12/02/10
 // This is here for use in get_node_ip. The other option was to
@@ -53,18 +53,19 @@ double	aodv_geo_vector_length(double start_x, double start_y,	double end_x,   do
 // 				we can forward the packet, otherwise drop it
 //
 // IN:			angle			-- angle in degrees formed by the 3 nodes (source, current, detination or previous, current, destination)
-//				request_level	-- request angle in multiples of 90
-Boolean	aodv_rte_rreq_within_area(double computed_angle, int request_level)
+//				request_level	-- request angle in multiples of angle_expand
+//				angle_expand	-- the number of degrees by which the flooding angle increases after route discovery failure
+Boolean	aodv_rte_rreq_within_area(double computed_angle, int request_level, double angle_expand)
 {	
     FIN (aodv_rte_rreq_within_area( <args> ));
 
-	// Flooding angle starts from 0 and goes to 3
-	// flooding angle = (request_level +1) *90
+	// Flooding angle starts from 0 and goes to ((360.0 / angle_expand) - 1)
+	// flooding angle = (request_level +1) * angle_expand
 
 	// the flooding angle is being computed as the request level multiplied 
-	// by 45 and not 90  degrees because the computed angle could be located
-	// on either side of the line that equally divides floodingn angle
-	if(computed_angle <= (request_level+1) * 45.0)
+	// by (angle_expand / 2) and not angle_expand degrees because the computed angle could be located
+	// on either side of the line that equally divides flooding angle
+	if(computed_angle <= (request_level+1) * (angle_expand / 2))
 	{
 	    FRET(OPC_TRUE)
 	}
@@ -127,7 +128,7 @@ double aodv_geo_compute_angle(double start_x, double start_y,
 
 // Purpose:		find neighbors in current flooding angle
 // IN:			neighbor_list	-- list of neighbors
-//				request_level	-- request angle in multiples of 90
+//				request_level	-- request angle in multiples of angle_expand
 //				geo_entry_ptr	-- not sure if needed!!
 // OUT:			TRUE: neighbor is found within flooding angle
 //				FALSE: no neighbors found
@@ -135,7 +136,8 @@ Boolean aodv_geo_find_neighbor(	AodvT_Geo_Table* geo_table_ptr,
 								PrgT_List* 	     neighbor_list,	// list of neighbors
 								int 		     request_level,	// request level/flooding angle
 								double	src_x,   double src_y,
-								double dest_x,   double dest_y)
+								double dest_x,   double dest_y,
+								double angle_expand )
 {
 	double 				angle;
 	AodvT_Geo_Entry* 	geo_neighbor;
@@ -163,7 +165,7 @@ Boolean aodv_geo_find_neighbor(	AodvT_Geo_Table* geo_table_ptr,
 											geo_neighbor->dst_x, geo_neighbor->dst_y);
 			
 			// Check if is within the area defined by the flooding angle/request level
-			if(aodv_rte_rreq_within_area(angle, request_level));
+			if(aodv_rte_rreq_within_area(angle, request_level, angle_expand));
 			{
 				FRET(OPC_TRUE);
 			}
@@ -273,7 +275,7 @@ Boolean aodv_geo_rebroadcast(
 			// in aodv_rte process model
 			
 			// Check if this is not a broadcast
-			if(flooding_angle < 360)
+			if(flooding_angle < MAX_ANGLE)
 			{
 				
 				// Compute the angle formed by the destination node, originating node, and current node
@@ -505,22 +507,26 @@ int aodv_geo_compute_expand_flooding_angle(
 			int	   								aodv_type,
 			Boolean								location_data_distributed, 
 			double								dst_x, //&dst_x
-			double	 							dst_y)	//&dst_y		
+			double	 							dst_y, //&dst_y
+			double								angle_expand)	
 {
 	//PrgT_List* 			neighbor_list;
 	//RH 3/27/13 - Need global stat handle for fallback statistic
 	AodvT_Global_Stathandles*	global_stat_handle_ptr;
+	double broadcast_request_level;
 	
 	FIN (aodv_geo_rreqsend( <args> ));
 	
+	broadcast_request_level = (MAX_ANGLE / angle_expand) - 1;
 	global_stat_handle_ptr = aodv_support_global_stat_handles_obtain();
+	
 	//MKA_VH 7/18/11 - If we're using a distributed geo table and we don't have destination coordinates,
 	// use regular AODV (broadcast).
 	if (aodv_type == AODV_TYPE_REGULAR ||
 		(location_data_distributed && aodv_geo_table_entry_exists(geo_table_ptr, dest_addr) == OPC_FALSE))
 	{
 		//Since we don't have accurate destination coordinates, just broadcast.
-		FRET (BROADCAST_REQUEST_LEVEL);
+		FRET (broadcast_request_level);
 	}
 		
 	switch(aodv_type)
@@ -537,7 +543,7 @@ int aodv_geo_compute_expand_flooding_angle(
 				// RH 3/27/13 - Update global aodv fallbacks statistic
 				op_stat_write(global_stat_handle_ptr->num_aodv_fallbacks_global_shandle, 1.0);
 				
-				request_level = BROADCAST_REQUEST_LEVEL;
+				request_level = broadcast_request_level;
 			}
 			
 			break;
@@ -548,7 +554,9 @@ int aodv_geo_compute_expand_flooding_angle(
 		case AODV_TYPE_GEO_ROTATE_01:
 		//MKA_VH 7/18/11 - We don't have to do anything; request_level is already incremented outside of
 		// this function upon a route discovery failure, which translates into an increased angle for GeoAODV.
-			if (request_level == BROADCAST_REQUEST_LEVEL) {
+			printf("\n\nBROADCAST = %f\n", broadcast_request_level);
+			printf("REQUEST = %f\n\n", request_level);
+			if (request_level == broadcast_request_level) {
 				// RH 3/27/13 - Update global aodv fallback statistic
 				op_stat_write(global_stat_handle_ptr->num_aodv_fallbacks_global_shandle, 1.0);
 			}
@@ -557,7 +565,7 @@ int aodv_geo_compute_expand_flooding_angle(
 		case AODV_TYPE_REGULAR:
 		default:
 			// do not use or expland the flooding angle based on neightbor locations
-			request_level = BROADCAST_REQUEST_LEVEL;
+			request_level = broadcast_request_level;
 			break;
 		
 	}

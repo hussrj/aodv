@@ -15,7 +15,7 @@
 
 
 /* This variable carries the header into the object file */
-const char aodv_rte_pr_c [] = "MIL_3_Tfile_Hdr_ 161A 30A modeler 7 5153C32C 5153C32C 1 damogran rob 0 0 none none 0 0 none 0 0 0 0 0 0 0 0 2a52 1                                                                                                                                                                                                                                                                                                                                                                                                             ";
+const char aodv_rte_pr_c [] = "MIL_3_Tfile_Hdr_ 161A 30A modeler 7 517613B3 517613B3 1 damogran rob 0 0 none none 0 0 none 0 0 0 0 0 0 0 0 2a52 1                                                                                                                                                                                                                                                                                                                                                                                                             ";
 #include <string.h>
 
 
@@ -310,6 +310,7 @@ typedef struct
 	                        		                                                	/*                                                              */
 	double	                 		lar_scale_factor                                ;	/* Alpha value in the LAR distance rebroadcast calculation */
 	double	                 		lar_padding                                     ;	/* Beta value in the LAR distance rebroadcast calculation */
+	double	                 		angle_expand                                    ;	/* The number of degrees to expand the GeoAODV flooding angle after route discovery failure */
 	} aodv_rte_state;
 
 #define module_data_ptr         		op_sv_ptr->module_data_ptr
@@ -367,6 +368,7 @@ typedef struct
 #define location_data_distributed		op_sv_ptr->location_data_distributed
 #define lar_scale_factor        		op_sv_ptr->lar_scale_factor
 #define lar_padding             		op_sv_ptr->lar_padding
+#define angle_expand            		op_sv_ptr->angle_expand
 
 /* These macro definitions will define a local variable called	*/
 /* "op_sv_ptr" in each function containing a FIN statement.	*/
@@ -1171,7 +1173,7 @@ aodv_rte_rreq_pkt_arrival_handle (Packet* ip_pkptr, Packet* aodv_pkptr, IpT_Dgra
 	printf("  SRC(x,y) = (%.2f, %.2f), DEST(x,y)= (%.f, %.f), Flooding Angle = %i, Time = %f\n\n", 
 			geo_lar_options->src.x, geo_lar_options->src.y, 
 			geo_lar_options->dst.x, geo_lar_options->dst.y, 
-			(geo_lar_options->request_level+1)*90, op_sim_time());	
+			(geo_lar_options->request_level+1)*angle_expand, op_sim_time());	
 	
 
 	// Update GeoTable with fresher originating node information
@@ -1674,7 +1676,7 @@ aodv_rte_rreq_pkt_arrival_handle (Packet* ip_pkptr, Packet* aodv_pkptr, IpT_Dgra
 								curr_x,  curr_y, 		
 								// MKA 01/25/11
 								geo_lar_options->dst.x, geo_lar_options->dst.y,
-								(double) ((geo_lar_options->request_level+1) * 90),  //TODO Use a variable name instead of a constant
+								(double) ((geo_lar_options->request_level+1) * angle_expand),  // RH 4/23/13 use variable angle_expand
 								angle_padding, //TODO get rid of this
 								geo_routing_type,
 								geo_lar_options->velocity,
@@ -2659,7 +2661,7 @@ aodv_rte_route_request_send (AodvT_Route_Entry* route_entry_ptr, InetT_Address d
 	// destination coordinates are passed by reference
 		//MKA_VH 07/18/11 - Passing in whether or not we're using geo tables. 
 	request_level = aodv_geo_compute_expand_flooding_angle(neighbor_connectivity_table, dest_addr, src_x, src_y, 
-														   request_level, geo_table_ptr, geo_routing_type, location_data_distributed, dst_x, dst_y); 
+														   request_level, geo_table_ptr, geo_routing_type, location_data_distributed, dst_x, dst_y, angle_expand); 
 	
 	printf("=> after request_level = %d\n", request_level);
 	
@@ -3836,7 +3838,7 @@ aodv_rte_rreq_timer_expiry_handle (void* rreq_id_ptr1, int PRG_ARG_UNUSED(code))
 	else if (request_entry_ptr->num_retries >= request_table_ptr->max_rreq_retries)
 		{
 		// MHAVH 13/11/08 - if the broadcast level is reached, the destination is unreachable
-		if(request_entry_ptr->request_level == BROADCAST_REQUEST_LEVEL)
+		if(request_entry_ptr->request_level == ((360.0 / angle_expand) - 1))
 			{
 		
 			/* There are packets queued to the destination.	*/
@@ -4026,7 +4028,7 @@ aodv_rte_local_repair_attempt (InetT_Address dest_addr, AodvT_Route_Entry* route
 	/* Broadcast a route request	*/
 	
 	// MHAVH 13/11/08 - broadcast a route request, since we want to have a default value for when local repair exists
-	aodv_rte_route_request_send (route_entry_ptr, dest_addr, ttl_value, ring_traversal_time, 0, BROADCAST_REQUEST_LEVEL);
+	aodv_rte_route_request_send (route_entry_ptr, dest_addr, ttl_value, ring_traversal_time, 0, ((360.0 / angle_expand) - 1));
 	// END MHAVH
 	
 	/* Insert this destination into the list of	destinations	*/
@@ -4487,6 +4489,10 @@ static void	aodv_rte_geo_init()
 	op_ima_obj_attr_get(aodv_parms_child_id, "LAR Scale Factor", &lar_scale_factor);
 	op_ima_obj_attr_get(aodv_parms_child_id, "LAR Padding", &lar_padding);
 	
+	// RH 4/21/13
+	// GeoAODV angle expansion
+	op_ima_obj_attr_get(aodv_parms_child_id, "GeoAODV Angle Expansion", &angle_expand);
+	
 	// MKA 12/03/10, 07/23/11
 	// Initialize location databases
 	if ( geo_routing_type != AODV_TYPE_REGULAR )
@@ -4792,6 +4798,7 @@ _op_aodv_rte_terminate (OP_SIM_CONTEXT_ARG_OPT)
 #undef location_data_distributed
 #undef lar_scale_factor
 #undef lar_padding
+#undef angle_expand
 
 #undef FIN_PREAMBLE_DEC
 #undef FIN_PREAMBLE_CODE
@@ -5121,6 +5128,11 @@ _op_aodv_rte_svar (void * gen_ptr, const char * var_name, void ** var_p_ptr)
 	if (strcmp ("lar_padding" , var_name) == 0)
 		{
 		*var_p_ptr = (void *) (&prs_ptr->lar_padding);
+		FOUT
+		}
+	if (strcmp ("angle_expand" , var_name) == 0)
+		{
+		*var_p_ptr = (void *) (&prs_ptr->angle_expand);
 		FOUT
 		}
 	*var_p_ptr = (void *)OPC_NIL;

@@ -60,7 +60,8 @@ extern "C" {
 #define DEFAULT_X						-1.0
 #define DEFAULT_Y						-1.0
 #define INITIAL_REQUEST_LEVEL			0
-#define BROADCAST_REQUEST_LEVEL         3
+// RH 4/23/13 angle_expand makes broadcast level variable
+// #define BROADCAST_REQUEST_LEVEL         3
 // MHAVH
 
 // HAV 03/18/09 - types of possible aodv options

@@ -37,13 +37,14 @@ int aodv_geo_compute_expand_flooding_angle(
 			int	   								aodv_type,
 			Boolean								location_data_distributed, //MKA_VH 7/18/11
 			double								dst_x, 
-			double								dst_y);
+			double								dst_y,
+			double								angle_expand);
 
 Boolean aodv_geo_LAR_distance(double start_x, double start_y,  double mid_x,   double mid_y,  double end_x,   double end_y, double lar_scale_factor, double lar_padding);
 
 double  aodv_geo_compute_angle(double start_x, double start_y,  double mid_x,   double mid_y,  double end_x,   double end_y);
 
-Boolean aodv_rte_rreq_within_area(double computed_angle, int request_level);
+Boolean aodv_rte_rreq_within_area(double computed_angle, int request_level, double angle_expand);
 
 double  aodv_geo_vector_length(double start_x, double start_y,	double end_x,   double end_y);
 
@@ -51,7 +52,8 @@ Boolean aodv_geo_find_neighbor(AodvT_Geo_Table* geo_table_ptr,
 										PrgT_List* 	     neighbor_list,	
 										int 		     request_level,	
 										double	src_x,   double src_y,
-										double dest_x,   double dest_y);
+										double dest_x,   double dest_y,
+										double angle_expand );
 
 /* --------------- */
 /* LAR Definitions */
