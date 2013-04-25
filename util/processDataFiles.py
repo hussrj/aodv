@@ -4,8 +4,11 @@
 import glob
 import re
 
-NUMSEED = 7
-RUNSPERSEED = 36
+LARP_NUMSEED = 7
+GEOP_NUMSEED = 7
+LARP_RUNSPERSEED = 36
+GEOP_RUNSPERSEED = 36
+GEOP_RUNSPERPROT = 18
 BETAS = 6
 
 # check if string is decimal - used when finding min(avg(dataDES))
@@ -24,6 +27,10 @@ for fname in glob.glob("../data/*.txt"):
 		dataLine = "" # a full line (RUNSPERSEED length) of data
 		dataALLDES = [] # the line of data split into DES
 		
+		if (fname[-8:-4] == "LARP"):
+			NUMSEED = LARP_NUMSEED
+			RUNSPERSEED = LARP_RUNSPERSEED
+
 		# get data line and split into list
 		# if the filter was sample_sum, just use the second to last line
 		if (fname[-12:-9] == "SUM"):
