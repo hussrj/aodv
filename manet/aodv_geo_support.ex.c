@@ -193,11 +193,13 @@ aodv_geo_LAR_distance(double start_x, double start_y,
 					  double end_x,   double end_y,
 					  double lar_scale_factor, double lar_padding)
 {
-		
+	double vector_length; double padding;
 	FIN (aodv_rte_rreq_within_distance( <args> ));
+	vector_length = aodv_geo_vector_length(start_x, start_y, end_x, end_y);
+	padding = vector_length * lar_padding;
 	
 	// RH 3/17/13 - Use LAR parameters in comparison (alpha and beta)
-	if (lar_scale_factor * aodv_geo_vector_length(start_x, start_y, end_x, end_y) + lar_padding >=
+	if (lar_scale_factor * vector_length + padding >=
 		aodv_geo_vector_length(mid_x, mid_y, end_x, end_y))
 	{
 		FRET(OPC_TRUE);
@@ -554,8 +556,6 @@ int aodv_geo_compute_expand_flooding_angle(
 		case AODV_TYPE_GEO_ROTATE_01:
 		//MKA_VH 7/18/11 - We don't have to do anything; request_level is already incremented outside of
 		// this function upon a route discovery failure, which translates into an increased angle for GeoAODV.
-			printf("\n\nBROADCAST = %f\n", broadcast_request_level);
-			printf("REQUEST = %f\n\n", request_level);
 			if (request_level == broadcast_request_level) {
 				// RH 3/27/13 - Update global aodv fallback statistic
 				op_stat_write(global_stat_handle_ptr->num_aodv_fallbacks_global_shandle, 1.0);

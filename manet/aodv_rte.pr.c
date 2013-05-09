@@ -15,7 +15,7 @@
 
 
 /* This variable carries the header into the object file */
-const char aodv_rte_pr_c [] = "MIL_3_Tfile_Hdr_ 161A 30A modeler 7 517613B3 517613B3 1 damogran rob 0 0 none none 0 0 none 0 0 0 0 0 0 0 0 2a52 1                                                                                                                                                                                                                                                                                                                                                                                                             ";
+const char aodv_rte_pr_c [] = "MIL_3_Tfile_Hdr_ 161A 30A modeler 7 51888179 51888179 1 magrathea rob 0 0 none none 0 0 none 0 0 0 0 0 0 0 0 2a52 1                                                                                                                                                                                                                                                                                                                                                                                                            ";
 #include <string.h>
 
 
@@ -1170,10 +1170,10 @@ aodv_rte_rreq_pkt_arrival_handle (Packet* ip_pkptr, Packet* aodv_pkptr, IpT_Dgra
 	// DEBUG*********************
 	printf("  ************** RREQ from %s arrived at %s (%.2f, %.2f)\n", tmp_ip_addr, name, curr_x, curr_y);
 	printf("  RREQ info:\n  Sequence # = %d TTL = %d \n", rreq_option_ptr->src_seq_num, ip_dgram_fd_ptr->ttl);
-	printf("  SRC(x,y) = (%.2f, %.2f), DEST(x,y)= (%.f, %.f), Flooding Angle = %i, Time = %f\n\n", 
+	printf("  SRC(x,y) = (%.2f, %.2f), DEST(x,y)= (%.f, %.f), Flooding Angle = %f, Time = %f, Request Level = %i, Angle Expand = %.f\n\n", 
 			geo_lar_options->src.x, geo_lar_options->src.y, 
 			geo_lar_options->dst.x, geo_lar_options->dst.y, 
-			(geo_lar_options->request_level+1)*angle_expand, op_sim_time());	
+			(geo_lar_options->request_level+1)*angle_expand, op_sim_time(), (geo_lar_options->request_level+1), angle_expand);	
 	
 
 	// Update GeoTable with fresher originating node information
@@ -2661,7 +2661,8 @@ aodv_rte_route_request_send (AodvT_Route_Entry* route_entry_ptr, InetT_Address d
 	// destination coordinates are passed by reference
 		//MKA_VH 07/18/11 - Passing in whether or not we're using geo tables. 
 	request_level = aodv_geo_compute_expand_flooding_angle(neighbor_connectivity_table, dest_addr, src_x, src_y, 
-														   request_level, geo_table_ptr, geo_routing_type, location_data_distributed, dst_x, dst_y, angle_expand); 
+														   request_level, geo_table_ptr, geo_routing_type, location_data_distributed, dst_x, dst_y, angle_expand);
+	printf("AE = %f", angle_expand);
 	
 	printf("=> after request_level = %d\n", request_level);
 	
@@ -4488,7 +4489,7 @@ static void	aodv_rte_geo_init()
 	// RH 3/17/13
 	op_ima_obj_attr_get(aodv_parms_child_id, "LAR Scale Factor", &lar_scale_factor);
 	op_ima_obj_attr_get(aodv_parms_child_id, "LAR Padding", &lar_padding);
-	
+
 	// RH 4/21/13
 	// GeoAODV angle expansion
 	op_ima_obj_attr_get(aodv_parms_child_id, "GeoAODV Angle Expansion", &angle_expand);

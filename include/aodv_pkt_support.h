@@ -67,6 +67,7 @@ typedef struct
 	Point2D				dst;
 	int					request_level;
 	double				velocity;
+	double				angle_expand;
 } AodvT_LAR_Info;
 
 /* Route Request Option	*/
